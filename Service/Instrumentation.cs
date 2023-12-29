@@ -5,19 +5,13 @@ namespace Service
 {
     public static class Instrumentation
     {
-        public const string ActivitySourceName = "Examples.AspNetCore";
-        internal const string MeterName = "Examples.AspNetCore";
-
-        public static ActivitySource GetActivitySource()
+        public static ActivitySource GetActivitySource(string name)
         {
             string? version = typeof(Instrumentation).Assembly.GetName().Version?.ToString();
-            return new ActivitySource(ActivitySourceName, version);
+            return new ActivitySource(name, version);
         }
 
-        public static ActivitySource GetActivitySource<T>()
-        {
-            string? version = typeof(Instrumentation).Assembly.GetName().Version?.ToString();
-            return new ActivitySource(typeof(T).FullName!, version);
-        }
+        public static ActivitySource GetActivitySource<T>() => GetActivitySource(typeof(T).FullName!);
+        public static ActivitySource GetActivitySource(Type t) => GetActivitySource(t.FullName!);
     }
 }

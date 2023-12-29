@@ -2,23 +2,19 @@ using Database.Context;
 using Database.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using NotesApp.API;
-using OpenTelemetry;
 using OpenTelemetry.Exporter.InfluxDB;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Service;
-using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
 
-const string serviceName = "roll-dice";
+const string serviceName = "NotesApp";
 
 // builder.Services.AddSingleton<Instrumentation>();
-builder.Services.AddSingleton<TestService>();
 
 builder.Logging.AddOpenTelemetry(options =>
 {
@@ -31,11 +27,10 @@ builder.Logging.AddOpenTelemetry(options =>
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(serviceName))
     .WithTracing(tracing => tracing
-        .AddSource(Instrumentation.ActivitySourceName)
         .AddSource("NotesApp.*")
         .SetSampler(new AlwaysOnSampler())
         .AddAspNetCoreInstrumentation()
-        .AddZipkinExporter())
+        .AddOtlpExporter(opts => { opts.Endpoint = new Uri("http://localhost:4317"); }))
     .WithMetrics(metrics =>
     {
         metrics
