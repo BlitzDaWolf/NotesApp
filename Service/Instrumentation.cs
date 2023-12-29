@@ -14,24 +14,10 @@ namespace Service
             return new ActivitySource(ActivitySourceName, version);
         }
 
-        /*private readonly Meter meter;
-
-        public Instrumentation()
+        public static ActivitySource GetActivitySource<T>()
         {
             string? version = typeof(Instrumentation).Assembly.GetName().Version?.ToString();
-            this.ActivitySource = new ActivitySource(ActivitySourceName, version);
-            this.meter = new Meter(MeterName, version);
-            this.FreezingDaysCounter = this.meter.CreateCounter<long>("weather.days.freezing", description: "The number of days where the temperature is below freezing");
+            return new ActivitySource(typeof(T).FullName!, version);
         }
-
-        public ActivitySource ActivitySource { get; }
-
-        public Counter<long> FreezingDaysCounter { get; }
-
-        public void Dispose()
-        {
-            this.ActivitySource.Dispose();
-            this.meter.Dispose();
-        }*/
     }
 }

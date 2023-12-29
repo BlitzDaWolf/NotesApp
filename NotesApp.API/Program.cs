@@ -32,6 +32,7 @@ builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(serviceName))
     .WithTracing(tracing => tracing
         .AddSource(Instrumentation.ActivitySourceName)
+        .AddSource("NotesApp.*")
         .SetSampler(new AlwaysOnSampler())
         .AddAspNetCoreInstrumentation()
         .AddZipkinExporter())

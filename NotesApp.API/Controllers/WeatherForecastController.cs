@@ -26,7 +26,7 @@ namespace NotesApp.API.Controllers
         [HttpGet(Name = "GetWeatherForecast")]
         public async Task<IEnumerable<WeatherForecast>> Get(int runs)
         {
-            using var activity = Instrumentation.GetActivitySource().StartActivity("calculate forecast");
+            using var activity = Instrumentation.GetActivitySource<WeatherForecast>().StartActivity("calculate forecast");
             for (int i = 0; i < runs; i++)
             {
                 await Task.Delay(200);
