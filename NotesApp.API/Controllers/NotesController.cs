@@ -32,14 +32,14 @@ namespace NotesApp.API.Controllers
             return Ok();
         }
 
-        [HttpPost]
+        [HttpPost("create")]
         public IActionResult CreateNote()
         {
             var u = User;
             return Ok();
         }
 
-        [HttpPost]
+        [HttpPost("edit")]
         public IActionResult EditNote()
         {
             var u = User;
