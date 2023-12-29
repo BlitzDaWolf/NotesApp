@@ -34,8 +34,7 @@ builder.Services.AddOpenTelemetry()
         .AddSource(Instrumentation.ActivitySourceName)
         .SetSampler(new AlwaysOnSampler())
         .AddAspNetCoreInstrumentation()
-        .AddZipkinExporter()
-        .AddConsoleExporter())
+        .AddZipkinExporter())
     .WithMetrics(metrics =>
     {
         metrics
