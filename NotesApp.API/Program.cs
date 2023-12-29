@@ -17,7 +17,7 @@ var config = builder.Configuration;
 
 const string serviceName = "roll-dice";
 
-builder.Services.AddSingleton<Instrumentation>();
+// builder.Services.AddSingleton<Instrumentation>();
 builder.Services.AddSingleton<TestService>();
 
 builder.Logging.AddOpenTelemetry(options =>

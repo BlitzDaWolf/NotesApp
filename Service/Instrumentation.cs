@@ -3,11 +3,18 @@ using System.Diagnostics;
 
 namespace Service
 {
-    public class Instrumentation
+    public static class Instrumentation
     {
         public const string ActivitySourceName = "Examples.AspNetCore";
         internal const string MeterName = "Examples.AspNetCore";
-        private readonly Meter meter;
+
+        public static ActivitySource GetActivitySource()
+        {
+            string? version = typeof(Instrumentation).Assembly.GetName().Version?.ToString();
+            return new ActivitySource(ActivitySourceName, version);
+        }
+
+        /*private readonly Meter meter;
 
         public Instrumentation()
         {
@@ -25,6 +32,6 @@ namespace Service
         {
             this.ActivitySource.Dispose();
             this.meter.Dispose();
-        }
+        }*/
     }
 }

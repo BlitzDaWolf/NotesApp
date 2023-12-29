@@ -15,21 +15,18 @@ namespace NotesApp.API.Controllers
         };
 
         private readonly ILogger<WeatherForecastController> _logger;
-        private readonly ActivitySource activitySource;
         readonly TestService testService;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger, Instrumentation instrumentation, TestService testService)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, TestService testService)
         {
             _logger = logger;
-            this.activitySource = instrumentation.ActivitySource;
             this.testService = testService;
         }
 
         [HttpGet(Name = "GetWeatherForecast")]
         public async Task<IEnumerable<WeatherForecast>> Get(int runs)
         {
-            var curId = Activity.Current?.Id;
-            using var activity = this.activitySource.StartActivity("calculate forecast");
+            using var activity = Instrumentation.GetActivitySource().StartActivity("calculate forecast");
             for (int i = 0; i < runs; i++)
             {
                 await Task.Delay(200);
