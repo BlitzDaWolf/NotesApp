@@ -2,8 +2,57 @@ using Database.Context;
 using Database.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using NotesApp.API;
+using OpenTelemetry;
+using OpenTelemetry.Exporter.InfluxDB;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Service;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
+var config = builder.Configuration;
+
+const string serviceName = "roll-dice";
+
+builder.Services.AddSingleton<Instrumentation>();
+builder.Services.AddSingleton<TestService>();
+
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options
+    .SetResourceBuilder(
+        ResourceBuilder.CreateDefault()
+            .AddService(serviceName))
+    .AddConsoleExporter();
+});
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(serviceName))
+    .WithTracing(tracing => tracing
+        .AddSource(Instrumentation.ActivitySourceName)
+        .SetSampler(new AlwaysOnSampler())
+        .AddAspNetCoreInstrumentation()
+        .AddZipkinExporter()
+        .AddConsoleExporter())
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation()
+            .AddRuntimeInstrumentation();
+        if (config.GetValue<bool>("InfluxDB:Use"))
+        {
+            metrics.AddInfluxDBMetricsExporter(options =>
+            {
+                options.Org = config["InfluxDB:Org"];
+                options.Bucket = config["InfluxDB:Bucket"];
+                options.Token = config["InfluxDB:Token"];
+                options.Endpoint = new Uri(config["InfluxDB:url"]!);
+                options.MetricsSchema = MetricsSchema.TelegrafPrometheusV2;
+            });
+        }
+    });
 
 // Add services to the container.
 
