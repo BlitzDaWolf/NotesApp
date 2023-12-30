@@ -15,5 +15,6 @@ namespace Service.Interfaces
         Task<IEnumerable<Note>> GetMyNotesAsync(string? name);
         Task<IEnumerable<Note>> GetPublicNotesAsync();
         Task<Note> GetNoteAsync(Guid id, string? email);
+        Task<Note> EditNoteAsync(Guid noteId, string newText, string? name);
     }
 }

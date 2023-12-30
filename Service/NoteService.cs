@@ -110,5 +110,18 @@ namespace Service
             }
             return note;
         }
+
+        public async Task<Note> EditNoteAsync(Guid noteId, string newText, string? name)
+        {
+            using var activity = Instrumentation.GetActivitySource<NoteService>().StartActivity("Edit note async");
+            var user = await GetUserAsync(name);
+            var note = await context.Notes.FirstOrDefaultAsync(x => x.Id == noteId);
+            if (note.UserId != user.Id) throw new Exception("Unable to find the note");
+            note.Text = newText;
+            using var a = Instrumentation.GetActivitySource<NoteService>().StartActivity("Updating note");
+            context.Notes.Update(note);
+            await context.SaveChangesAsync();
+            return note;
+        }
     }
 }

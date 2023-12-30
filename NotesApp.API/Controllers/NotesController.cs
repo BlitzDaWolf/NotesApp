@@ -55,10 +55,10 @@ namespace NotesApp.API.Controllers
         }
 
         [HttpPost("edit")]
-        public IActionResult EditNote()
+        public async Task<ActionResult<Note>> EditNote(EditNote newNote)
         {
             var u = User;
-            return Ok();
+            return Ok(await noteService.EditNoteAsync(newNote.noteId, newNote.newText, u.Identity!.Name));
         }
 
         [HttpPut("{id:guid}")]
@@ -75,8 +75,6 @@ namespace NotesApp.API.Controllers
         }
     }
 
-    public record CreateNote(string noteName, string noteDescription)
-    {
-
-    }
+    public record CreateNote(string noteName, string noteDescription);
+    public record EditNote(Guid noteId, string newText);
 }
