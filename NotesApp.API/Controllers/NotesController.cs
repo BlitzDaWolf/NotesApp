@@ -61,16 +61,19 @@ namespace NotesApp.API.Controllers
             return Ok(await noteService.EditNoteAsync(newNote.noteId, newNote.newText, u.Identity!.Name));
         }
 
-        [HttpPut("{id:guid}")]
-        public IActionResult AddUser(Guid id)
+        [HttpPut("{id:guid}/{userId}")]
+        public async Task<IActionResult> AddUser(Guid id, string userId)
         {
             var u = User;
+            await noteService.AddUserAsync(id, userId, u.Identity!.Name);
             return Ok();
         }
 
-        [HttpDelete("{id:guid}")]
-        public IActionResult RemoveUser(Guid id)
+        [HttpDelete("{id:guid}/{userId}")]
+        public async Task<IActionResult> RemoveUser(Guid id, string userId)
         {
+            var u = User;
+            await noteService.RemoveUserAsync(id, userId, u.Identity!.Name);
             return Ok();
         }
     }

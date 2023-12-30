@@ -13,5 +13,7 @@
 
         public string UserId { get; set; }
         public User User { get; set; }
+
+        List<UserNote> UserConections { get; set; }
     }
 }

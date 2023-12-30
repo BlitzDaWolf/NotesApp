@@ -72,6 +72,7 @@ namespace Service
         }
 
 
+
         public async Task<Guid> CreateNoteAsync(string? name, string noteName, string noteDescription)
         {
             using var createActivity = Instrumentation.GetActivitySource<NoteService>().StartActivity("Creating note");
@@ -88,6 +89,7 @@ namespace Service
             using var saveActivity = Instrumentation.GetActivitySource<NoteService>().StartActivity("saving note");
             context.SaveChanges();
             saveActivity.AddEvent(new System.Diagnostics.ActivityEvent("Note saved"));
+            await AddToGroup(userId, note.Id);
             return note.Id;
         }
 
@@ -111,7 +113,7 @@ namespace Service
                 throw new Exception();
             }
 
-            return (await GetAllNotesAsync()).Where(x => x.UserId == userId);
+            return (await GetAllNotesAsync()).Where(x => IsInGroup(x, userId));
         }
 
         public async Task<IEnumerable<Note>> GetPublicNotesAsync()
@@ -127,7 +129,7 @@ namespace Service
             if (!note!.IsPublic)
             {
                 var user = await GetUserAsync(email);
-                if (user.Id != note.UserId) throw new Exception("Unable to find the note");
+                if (IsInGroup(note, user.Id)) throw new Exception("Unable to find the note");
             }
             return note;
         }
@@ -147,6 +149,42 @@ namespace Service
             await context.SaveChangesAsync();
 
             return note;
+        }
+
+        public bool IsInGroup(Note note, string userId)
+        {
+            using var activity = Instrumentation.GetActivitySource<NoteService>().StartActivity("Checking if user is in note group");
+            return context.UserNotes.Where(x => x.UserId == userId && x.NoteId == note.Id).Count() >0;
+        }
+
+        public async Task AddToGroup(string userId, Guid NoteId)
+        {
+            using var activity = Instrumentation.GetActivitySource<NoteService>().StartActivity("adding user to note group");
+            await context.UserNotes.AddAsync(new UserNote { NoteId = NoteId, UserId = userId });
+            await context.SaveChangesAsync();
+        }
+
+        public async Task AddUserAsync(Guid id, string userId, string? email)
+        {
+            using var activity = Instrumentation.GetActivitySource<NoteService>().StartActivity("Adding user from note");
+            var note = await context.Notes.FirstOrDefaultAsync(x => x.Id == id);
+            var user = await GetUserAsync(email);
+
+            if(!IsInGroup(note, user.Id)) throw new Exception("Unable to find the note");
+            await AddToGroup(userId, id);
+        }
+
+        public async Task RemoveUserAsync(Guid id, string userId, string? email)
+        {
+            using var activity = Instrumentation.GetActivitySource<NoteService>().StartActivity("Removing user from note");
+            var note = await context.Notes.FirstOrDefaultAsync(x => x.Id == id);
+            var user = await GetUserAsync(email);
+
+            if (!IsInGroup(note, user.Id)) throw new Exception("Unable to find the note");
+            if (note.UserId == userId) throw new Exception("Can't remove the note owner");
+
+            context.UserNotes.Remove(await context.UserNotes.FirstOrDefaultAsync(x => x.UserId == userId && x.NoteId == id));
+            await context.SaveChangesAsync();
         }
     }
 }

@@ -17,5 +17,7 @@ namespace Service.Interfaces
         Task<Note> GetNoteAsync(Guid id, string? email);
         Task<Note> EditNoteAsync(Guid noteId, string newText, string? name);
         Task<Guid> CreateNoteAsync(string? name, string noteName, string noteDescription);
+        Task AddUserAsync(Guid id, string userId, string? email);
+        Task RemoveUserAsync(Guid id, string userId, string? email);
     }
 }

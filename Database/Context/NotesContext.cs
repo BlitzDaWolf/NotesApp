@@ -8,7 +8,13 @@ namespace Database.Context
     {
         public NotesContext(DbContextOptions options) : base(options) { }
 
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+        }
+
         public DbSet<Note> Notes { get; set; }
         public DbSet<ChangeLog> ChangeLogs { get; set; }
+        public DbSet<UserNote> UserNotes { get; set; }
     }
 }
