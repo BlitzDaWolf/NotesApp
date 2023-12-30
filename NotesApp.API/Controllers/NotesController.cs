@@ -47,10 +47,10 @@ namespace NotesApp.API.Controllers
         }
 
         [HttpPost("create")]
-        public IActionResult CreateNote(CreateNote noteCreate)
+        public async Task<IActionResult> CreateNote(CreateNote noteCreate)
         {
             var u = User;
-            Guid id = noteService.CreateNote(u.Identity!.Name, noteCreate.noteName, noteCreate.noteDescription);
+            Guid id = await noteService.CreateNoteAsync(u.Identity!.Name, noteCreate.noteName, noteCreate.noteDescription);
             return Created("api/[controller]/", id);
         }
 

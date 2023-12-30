@@ -14,10 +14,12 @@ namespace Service
     public class NoteService : INoteService
     {
         readonly NotesContext context;
+        readonly IChangeLogService changeLogService;
 
-        public NoteService(NotesContext context)
+        public NoteService(NotesContext context, IChangeLogService changeLogService)
         {
             this.context = context;
+            this.changeLogService = changeLogService;
         }
 
         public User GetUser(string email)
@@ -70,6 +72,25 @@ namespace Service
         }
 
 
+        public async Task<Guid> CreateNoteAsync(string? name, string noteName, string noteDescription)
+        {
+            using var createActivity = Instrumentation.GetActivitySource<NoteService>().StartActivity("Creating note");
+            var userId = GetUser(name).Id;
+            var note = new Note
+            {
+                IsPublic = true,
+                Name = noteName,
+                UserId = userId,
+                Description = noteDescription
+            };
+            note.CurrentHash = await changeLogService.CreateLog(note.Id, "");
+            context.Notes.Add(note);
+            using var saveActivity = Instrumentation.GetActivitySource<NoteService>().StartActivity("saving note");
+            context.SaveChanges();
+            saveActivity.AddEvent(new System.Diagnostics.ActivityEvent("Note saved"));
+            return note.Id;
+        }
+
         public async Task<IEnumerable<Note>> GetAllNotesAsync()
         {
             using var activity = Instrumentation.GetActivitySource<NoteService>().StartActivity("Retriving notes async");
@@ -117,10 +138,14 @@ namespace Service
             var user = await GetUserAsync(name);
             var note = await context.Notes.FirstOrDefaultAsync(x => x.Id == noteId);
             if (note.UserId != user.Id) throw new Exception("Unable to find the note");
+
+            note.CurrentHash = await changeLogService.CreateLog(noteId, newText);
+
             note.Text = newText;
             using var a = Instrumentation.GetActivitySource<NoteService>().StartActivity("Updating note");
             context.Notes.Update(note);
             await context.SaveChangesAsync();
+
             return note;
         }
     }

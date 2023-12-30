@@ -71,6 +71,7 @@ builder.Services.AddIdentityCore<User>()
     .AddApiEndpoints();
 
 builder.Services.AddScoped<INoteService, NoteService>();
+builder.Services.AddScoped<IChangeLogService, ChangeLogService>();
 
 var app = builder.Build();
 
