@@ -1,0 +1,46 @@
+version: '3.7'
+
+# To run a specific version of Jaeger, use environment variable, e.g.:
+#     JAEGER_VERSION=1.52 docker compose up
+
+services:
+  jaeger:
+    image: jaegertracing/opentelemetry-all-in-one
+    ports:
+      - "16686:16686"
+      - "13133:13133"
+      - "4317:4317"
+    environment:
+      - LOG_LEVEL=debug
+    networks:
+      - jaeger-example
+      
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - 3000:3000
+    environment:
+      - INFLUX_HOST=http://influxdb:8086
+      - INFLUX_TOKEN=ylg2twpJS18HMUFUZwZyq_FOxFItHy_ibIU8Ol4SxP_jsbS2dWsP00KPchkzWWCSqlvFJuBgAlMAlow2ONRjEg==
+      - INFLUX_ORG=org
+      - INFLUX_BUCKET=bucket
+      - GF_INSTALL_PLUGINS=influxdata-flightsql-datasource
+    volumes: 
+      - ./demo/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./demo/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - grafana:/var/lib/grafana/
+    restart: always
+    networks:
+      - jaeger-example
+    
+  influxdb:
+    image: influxdb:latest
+    ports:
+      - "8086:8086"
+    networks:
+      - jaeger-example
+
+networks:
+  jaeger-example:
+volumes:
+  grafana:

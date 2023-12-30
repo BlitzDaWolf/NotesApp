@@ -10,6 +10,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Service;
+using Service.Interfaces;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,7 +31,7 @@ builder.Logging.AddOpenTelemetry(options =>
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(serviceName))
     .WithTracing(tracing => tracing
-        .AddSource("NotesApp.*")
+        .AddSource("NotesApp.*", "Service.*")
         .SetSampler(new AlwaysOnSampler())
         .AddAspNetCoreInstrumentation()
         .AddOtlpExporter(opts => { opts.Endpoint = new Uri("http://localhost:4317"); }))
@@ -50,6 +51,7 @@ builder.Services.AddOpenTelemetry()
                 options.MetricsSchema = MetricsSchema.TelegrafPrometheusV2;
             });
         }
+        metrics.AddPrometheusExporter();
     });
 
 // Add services to the container.
@@ -68,6 +70,8 @@ builder.Services.AddIdentityCore<User>()
     .AddEntityFrameworkStores<NotesContext>()
     .AddApiEndpoints();
 
+builder.Services.AddScoped<INoteService, NoteService>();
+
 var app = builder.Build();
 
 app.MapIdentityApi<User>();
@@ -82,5 +86,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.Run();

@@ -1,8 +1,11 @@
-﻿using Database.Entities;
+﻿using CsvHelper.Expressions;
+using Database.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Service.Interfaces;
+using System.Collections;
 using System.Security.Claims;
 
 namespace NotesApp.API.Controllers
@@ -12,11 +15,20 @@ namespace NotesApp.API.Controllers
     [ApiController]
     public class NotesController : ControllerBase
     {
+        readonly INoteService noteService;
+
+        public NotesController(INoteService noteService)
+        {
+            this.noteService = noteService;
+        }
+
         [HttpGet]
-        public IActionResult Index()
+        public async Task<ActionResult<IEnumerable<Note>>> Index()
         {
             var u = User;
-            return Ok();
+            // Retrive my notes
+            IEnumerable<Note> myNotes = await noteService.GetMyNotesAsync(u.Identity!.Name);
+            return Ok(myNotes);
         }
 
         [HttpGet("{id:guid}")]
@@ -27,16 +39,18 @@ namespace NotesApp.API.Controllers
         }
 
         [HttpGet("public")]
-        public IActionResult PublicNotes()
+        public ActionResult<IEnumerable<Note>> PublicNotes()
         {
-            return Ok();
+            IEnumerable<Note> notes = noteService.GetPublicNotes();
+            return Ok(notes);
         }
 
         [HttpPost("create")]
-        public IActionResult CreateNote()
+        public IActionResult CreateNote(CreateNote noteCreate)
         {
             var u = User;
-            return Ok();
+            Guid id = noteService.CreateNote(u.Identity!.Name, noteCreate.noteName, noteCreate.noteDescription);
+            return Created("api/[controller]/", id);
         }
 
         [HttpPost("edit")]
@@ -58,5 +72,10 @@ namespace NotesApp.API.Controllers
         {
             return Ok();
         }
+    }
+
+    public record CreateNote(string noteName, string noteDescription)
+    {
+
     }
 }
