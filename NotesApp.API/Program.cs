@@ -2,23 +2,23 @@ using Database.Context;
 using Database.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using NotesApp.API;
-using OpenTelemetry;
+using Microsoft.Extensions.Options;
+using NotesApp.API.Swagger;
 using OpenTelemetry.Exporter.InfluxDB;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Service;
-using System.Diagnostics;
+using Service.Interfaces;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
 
-const string serviceName = "roll-dice";
+const string serviceName = "NotesApp";
 
 // builder.Services.AddSingleton<Instrumentation>();
-builder.Services.AddSingleton<TestService>();
 
 builder.Logging.AddOpenTelemetry(options =>
 {
@@ -31,11 +31,10 @@ builder.Logging.AddOpenTelemetry(options =>
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(serviceName))
     .WithTracing(tracing => tracing
-        .AddSource(Instrumentation.ActivitySourceName)
-        .AddSource("NotesApp.*")
+        .AddSource("NotesApp.*", "Service.*")
         .SetSampler(new AlwaysOnSampler())
         .AddAspNetCoreInstrumentation()
-        .AddZipkinExporter())
+        .AddOtlpExporter(opts => { opts.Endpoint = new Uri("http://localhost:4317"); }))
     .WithMetrics(metrics =>
     {
         metrics
@@ -52,6 +51,7 @@ builder.Services.AddOpenTelemetry()
                 options.MetricsSchema = MetricsSchema.TelegrafPrometheusV2;
             });
         }
+        metrics.AddPrometheusExporter();
     });
 
 // Add services to the container.
@@ -60,6 +60,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 
 builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme);
 builder.Services.AddAuthorizationBuilder();
@@ -68,6 +69,9 @@ builder.Services.AddDbContext<NotesContext>(x => x.UseSqlite("DataSource=app.db"
 builder.Services.AddIdentityCore<User>()
     .AddEntityFrameworkStores<NotesContext>()
     .AddApiEndpoints();
+
+builder.Services.AddScoped<INoteService, NoteService>();
+builder.Services.AddScoped<IChangeLogService, ChangeLogService>();
 
 var app = builder.Build();
 
@@ -83,5 +87,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.Run();
