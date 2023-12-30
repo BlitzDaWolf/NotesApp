@@ -32,10 +32,11 @@ namespace NotesApp.API.Controllers
         }
 
         [HttpGet("{id:guid}")]
-        public IActionResult Details(Guid id)
+        public async Task<ActionResult<Note>> Details(Guid id)
         {
             var u = User;
-            return Ok();
+            Note n = await noteService.GetNoteAsync(id, u.Identity!.Name);
+            return Ok(n);
         }
 
         [HttpGet("public")]

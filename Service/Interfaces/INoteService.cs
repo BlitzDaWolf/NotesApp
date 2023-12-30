@@ -1,4 +1,5 @@
 ﻿using Database.Entities;
+using System.Security.Claims;
 
 namespace Service.Interfaces
 {
@@ -13,5 +14,6 @@ namespace Service.Interfaces
         Task<IEnumerable<Note>> GetAllNotesAsync();
         Task<IEnumerable<Note>> GetMyNotesAsync(string? name);
         Task<IEnumerable<Note>> GetPublicNotesAsync();
+        Task<Note> GetNoteAsync(Guid id, string? email);
     }
 }

@@ -95,7 +95,20 @@ namespace Service
 
         public async Task<IEnumerable<Note>> GetPublicNotesAsync()
         {
+            using var activity = Instrumentation.GetActivitySource<NoteService>().StartActivity("Retriving public notes async");
             return (await GetAllNotesAsync()).Where(x => x.IsPublic);
+        }
+
+        public async Task<Note> GetNoteAsync(Guid id, string? email)
+        {
+            using var activity = Instrumentation.GetActivitySource<NoteService>().StartActivity("Retriving note details async");
+            var note = await context.Notes.FirstOrDefaultAsync(x => x.Id == id);
+            if (!note!.IsPublic)
+            {
+                var user = await GetUserAsync(email);
+                if (user.Id != note.UserId) throw new Exception("Unable to find the note");
+            }
+            return note;
         }
     }
 }
